@@ -615,6 +615,7 @@ private final class SelectionView: NSView {
     private var detectingHover = false
     private var lastHoverPoint: CGPoint?
     private var hoverColor: String?
+    private var selectionGuide: HoverHintButton?
     private var shape: CaptureShape {
         get { session.shape }
         set { session.shape = newValue }
@@ -635,12 +636,35 @@ private final class SelectionView: NSView {
                                       bitsPerComponent: 8, bytesPerRow: 3600,
                                       space: CGColorSpaceCreateDeviceRGB(),
                                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
-        context.setFillColor(LEStyle.container.cgColor)
-        context.fill(CGRect(x: 0, y: 0, width: 900, height: 560))
-        context.setFillColor(LEStyle.elevated.cgColor)
-        context.fill(CGRect(x: 95, y: 70, width: 690, height: 420))
-        context.setFillColor(LEStyle.primary.cgColor)
-        context.fill(CGRect(x: 95, y: 455, width: 690, height: 35))
+        // Synthetic content behind the real selection UI, never the user's desktop.
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+        let flattened = CGRect(x: 0, y: 0, width: 900, height: 560)
+        NSGradient(starting: LEStyle.color(0x193451), ending: LEStyle.color(0x0D1628))?.draw(in: flattened, angle: 24)
+        func tile(_ rect: CGRect, _ rgb: UInt32, radius: CGFloat = 9) {
+            LEStyle.color(rgb).setFill()
+            NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).fill()
+        }
+        func word(_ string: String, _ x: CGFloat, _ y: CGFloat, size: CGFloat, color: UInt32, weight: NSFont.Weight = .regular) {
+            string.draw(at: CGPoint(x: x, y: y), withAttributes: [.font: NSFont.systemFont(ofSize: size, weight: weight), .foregroundColor: LEStyle.color(color)])
+        }
+        tile(CGRect(x: 98, y: 72, width: 702, height: 414), 0x17273C, radius: 16)
+        tile(CGRect(x: 109, y: 448, width: 680, height: 28), 0x21344C)
+        for (index, color) in [UInt32(0xF5959D), 0xE5BD7F, 0x8AD3C5].enumerated() {
+            tile(CGRect(x: 122 + index * 12, y: 458, width: 7, height: 7), color, radius: 3.5)
+        }
+        word("STUDIO NORTH  /  DEMO WORKSPACE", 165, 455, size: 12, color: 0x9AB2CE, weight: .semibold)
+        word("Weekly review", 197, 382, size: 29, color: 0xEEF5FF, weight: .bold)
+        word("PROJECT SAMPLE     /     WEEK 04", 198, 413, size: 10, color: 0x8EACCA, weight: .semibold)
+        let heights: [CGFloat] = [43, 59, 52, 74, 62, 91, 105]
+        tile(CGRect(x: 313, y: 172, width: 335, height: 187), 0x1E3451, radius: 13)
+        word("Weekly progress", 335, 322, size: 15, color: 0xC5DDF7, weight: .semibold)
+        for (index, height) in heights.enumerated() {
+            tile(CGRect(x: 339 + CGFloat(index) * 41, y: 198, width: 26, height: height), index == 6 ? 0x9ADACD : 0x497EAC, radius: 4)
+        }
+        word("APRIL", 338, 180, size: 9, color: 0x98B1CB, weight: .medium)
+        word("JUNE", 587, 180, size: 9, color: 0x98B1CB, weight: .medium)
+        NSGraphicsContext.restoreGraphicsState()
         guard let image = context.makeImage() else { return false }
         let view = SelectionView(frame: CGRect(x: 0, y: 0, width: 900, height: 560),
                                  snapshot: image, longCapture: false)
@@ -862,6 +886,10 @@ private final class SelectionView: NSView {
         self.desktopOffset = desktopOffset
         super.init(frame: frame)
         setupPalette()
+        selectionGuide = HoverHintButton.guide(longCapture
+            ? "单击选取窗口，或拖动框选长截图区域。\nEsc 退出。"
+            : "拖动框选截图区域；⇧ 单击选择窗口。\n单击复制当前像素的 HEX 色值。Esc 退出。", in: self, x: bounds.midX - 12, y: bounds.maxY - 48)
+        selectionGuide?.autoresizingMask = [.minXMargin, .maxXMargin, .minYMargin]
         self.session.attach(self)
         if self.session.paletteOwner == nil { self.session.paletteOwner = self }
     }
@@ -926,22 +954,18 @@ private final class SelectionView: NSView {
         }
         NSColor.black.withAlphaComponent(visible == nil ? 0.48 : 0.62).setFill()
         shade.fill()
-        if selection.width < 8 {
-            let pick = hoverColor.map { "单击复制 \($0)" } ?? "单击取色"
-            let tip = longCapture ? "长截图 · 单击选取窗口 · 拖动框选 · Esc 退出"
-                : "\(pick) · 拖动截图 · ⇧ 单击选窗口 · Esc 退出"
+        if selection.width < 8, let tip = hoverColor, !longCapture {
             let attributes: [NSAttributedString.Key: Any] = [
-                .font: NSFont.systemFont(ofSize: 12, weight: .medium),
+                .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .medium),
                 .foregroundColor: LEStyle.text
             ]
             let size = (tip as NSString).size(withAttributes: attributes)
-            let bubble = CGRect(x: (bounds.midX - size.width / 2 - 14).rounded(),
-                                y: bounds.maxY - 54, width: size.width + 28, height: 32)
+            let bubble = CGRect(x: bounds.midX + 20, y: bounds.maxY - 48, width: size.width + 20, height: 24)
             LEStyle.elevated.withAlphaComponent(0.96).setFill()
-            NSBezierPath(roundedRect: bubble, xRadius: 9, yRadius: 9).fill()
+            NSBezierPath(roundedRect: bubble, xRadius: 7, yRadius: 7).fill()
             LEStyle.border.setStroke()
-            NSBezierPath(roundedRect: bubble, xRadius: 9, yRadius: 9).stroke()
-            tip.draw(at: CGPoint(x: bubble.minX + 14, y: bubble.minY + 9), withAttributes: attributes)
+            NSBezierPath(roundedRect: bubble, xRadius: 7, yRadius: 7).stroke()
+            tip.draw(at: CGPoint(x: bubble.minX + 10, y: bubble.minY + 6), withAttributes: attributes)
         }
         if selection.width > 1 && selection.height > 1 {
             NSColor.controlAccentColor.setStroke()
@@ -1241,6 +1265,7 @@ private final class SelectionView: NSView {
     fileprivate func updatePalette() {
         let wasHidden = palette.isHidden
         palette.isHidden = selection.width < 8 || selection.height < 8 || session.paletteOwner !== self
+        selectionGuide?.isHidden = selection.width >= 8 || selection.height >= 8
         if palette.isHidden { popup?.close(restoringFocus: false) }
         guard !palette.isHidden else { return }
         let x = max(8, min(bounds.maxX - palette.frame.width - 8, selection.maxX - palette.frame.width))

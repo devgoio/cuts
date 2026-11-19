@@ -405,9 +405,10 @@ private final class LongCaptureGuide: NSObject {
         LEStyle.surface(bar, radius: 9)
         label.font = .systemFont(ofSize: 11, weight: .semibold)
         label.textColor = LEStyle.text
-        label.frame = CGRect(x: 12, y: 14, width: 218, height: 18)
+        label.frame = CGRect(x: 40, y: 14, width: 188, height: 18)
         label.lineBreakMode = .byTruncatingTail
         bar.addSubview(label)
+        HoverHintButton.guide("在选区内上下滚动；点「完成」结束。", in: bar, x: 10, y: 11)
         configure(autoButton, title: "自动滚动", x: 230, width: 69, action: #selector(toggleAutomatic))
         configure(finishButton, title: "完成", x: 305, width: 55, action: #selector(finish))
         finishButton.layer?.backgroundColor = LEStyle.primary.cgColor
@@ -539,7 +540,7 @@ private final class LongCaptureGuide: NSObject {
     }
 
     func ready() {
-        update("移入框内可上下滚动，点完成结束")
+        update("正在采集")
         finishButton.isEnabled = true
         autoButton.isEnabled = true
     }

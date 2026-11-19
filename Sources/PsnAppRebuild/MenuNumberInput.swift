@@ -2,20 +2,12 @@ import AppKit
 
 @MainActor
 enum NumberEditingShortcuts {
-    static func label() -> NSTextField {
-        let label = NSTextField(wrappingLabelWithString: "点击已有序号选中，可直接拖动\n⌘ + 左键：加 1   ⌥ + 左键：减 1\n选中后：↑ 加 1   ↓ 减 1")
-        label.font = .systemFont(ofSize: 11, weight: .medium)
-        label.textColor = LEStyle.secondary
-        label.frame = CGRect(x: 0, y: 0, width: 226, height: 46)
-        return label
-    }
+    static let guide = "点击已有序号选中，可直接拖动。\n⌘ + 左键：加 1   ⌥ + 左键：减 1\n选中后：↑ 加 1   ↓ 减 1"
 
     static func menuItem() -> NSMenuItem {
         let item = NSMenuItem()
-        let container = NSView(frame: CGRect(x: 0, y: 0, width: 240, height: 52))
-        let label = label()
-        label.frame.origin = CGPoint(x: 7, y: 2)
-        container.addSubview(label)
+        let container = NSView(frame: CGRect(x: 0, y: 0, width: 225, height: 27))
+        HoverHintButton.guide(guide, in: container, x: 195, y: 1)
         item.view = container
         return item
     }

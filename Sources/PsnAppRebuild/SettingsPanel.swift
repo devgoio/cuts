@@ -72,7 +72,7 @@ final class SettingsPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
               let sidebar = firstNavigation.superview,
               sidebar.layer?.backgroundColor == LEStyle.elevated.withAlphaComponent(0.30).cgColor,
               (30...44).contains(content.bounds.maxY - sidebar.frame.maxY),
-              settings.clipboardShortcutLabel?.stringValue.contains("⌘V·300") == true else { return false }
+              settings.clipboardGuide?.guideText?.contains("⌘V·300") == true else { return false }
         for name in Self.pageNames {
             settings.selectPage(name)
             guard settings.pages[name]?.isHidden == false,
@@ -134,7 +134,7 @@ final class SettingsPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
     private let filenamePreview = NSTextField(labelWithString: "")
     private let holdDelayField = SingleLineInputField()
     private let holdButton = PointingButton()
-    private var clipboardShortcutLabel: NSTextField?
+    private var clipboardGuide: HoverHintButton?
     private let loginButton = PointingButton()
     private let loginStatus = NSTextField(labelWithString: "")
     private let iconStatus = NSTextField(labelWithString: "")
@@ -231,8 +231,8 @@ final class SettingsPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
         holdButton.title = holdEnabled ? "已开启" : "已关闭"
         CutsSettingsStyle.control(holdButton, selected: holdEnabled)
         let display = ShortcutPreferences.clipboardShortcutLabel(milliseconds: savedHoldDelay)
-        clipboardShortcutLabel?.stringValue = savedHoldEnabled
-            ? "历史记录：文字、图片和文件；\(display) 打开。"
+        clipboardGuide?.guideText = savedHoldEnabled
+            ? "历史记录：文字、图片和文件；\(display) 打开。\n短按 ⌘V 仍执行普通粘贴。"
             : "历史记录：文字、图片和文件；可从菜单栏打开。"
         refreshGeneral()
         refreshMouseRuntimeState()
@@ -395,19 +395,13 @@ final class SettingsPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
         filenamePreview.textColor = LEStyle.text
         filenamePreview.lineBreakMode = .byTruncatingMiddle
         page.addSubview(filenamePreview)
-        label("预览按当前时间和已有文件推算；格式仅影响保存。", x: 18, y: 48,
-              width: 405, parent: page, color: LEStyle.secondary)
+        HoverHintButton.guide("预览按当前时间和已有文件推算。格式仅影响保存，不影响复制。", in: page, x: 396, y: 341)
         addCommit("保存", key: "capture", to: page, action: #selector(saveScreenshotSettings))
     }
 
     private func buildClipboardPage(_ page: NSView) {
         label("剪贴板", x: 18, y: 345, width: 250, size: 17, parent: page)
-        let hint = NSTextField(labelWithString: "")
-        hint.frame = CGRect(x: 18, y: 311, width: 404, height: 20)
-        hint.font = .systemFont(ofSize: 12)
-        hint.textColor = LEStyle.secondary
-        page.addSubview(hint)
-        clipboardShortcutLabel = hint
+        clipboardGuide = HoverHintButton.guide("从菜单栏打开剪贴板历史。", in: page, x: 396, y: 341)
         label("长按 ⌘V 打开历史", x: 18, y: 258, width: 240, parent: page)
         holdButton.frame = CGRect(x: 324, y: 251, width: 97, height: 29)
         style(holdButton, action: #selector(toggleHold))
@@ -421,8 +415,6 @@ final class SettingsPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
         page.addSubview(holdDelayField)
         label("毫秒（250–2000）", x: 223, y: 205.5, width: 175, parent: page,
               color: LEStyle.secondary, centered: true)
-        label("短按 ⌘V 仍执行普通粘贴。", x: 18, y: 157,
-              width: 390, parent: page, color: LEStyle.secondary)
         addCommit("应用", key: "clipboard", to: page, action: #selector(applyHoldDelay))
     }
 
@@ -434,6 +426,7 @@ final class SettingsPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
         version.font = .monospacedDigitSystemFont(ofSize: 12, weight: .medium)
         version.textColor = LEStyle.secondary
         page.addSubview(version)
+        HoverHintButton.guide("可设置登录时启动；在「系统登录项」里查看状态。\n导入 SVG 只更换菜单栏图标。", in: page, x: 240, y: 341)
         label("登录 Mac 时启动", x: 18, y: 295, width: 220, parent: page)
         loginButton.frame = CGRect(x: 324, y: 287, width: 97, height: 29)
         style(loginButton, action: #selector(toggleLoginLaunch))
@@ -503,8 +496,7 @@ final class SettingsPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
         page.addSubview(mouseSpeedField)
         mouseToggle("保留触控板/手势滚动", key: "discrete", y: 122, parent: page)
         mouseToggle("侧键 3/4 → 后退/前进", key: "side", y: 84, parent: page)
-        label("部分高精度滚轮会被识别为手势。关闭手势保留后，触控板也会受影响。", x: 18, y: 51,
-              width: 405, parent: page, color: LEStyle.secondary)
+        HoverHintButton.guide("部分高精度滚轮会被识别为手势。\n关闭手势保留后，触控板也会受影响。", in: page, x: 396, y: 341)
         mouseRetry = button("重新启用", x: 18, y: 19, width: 100, parent: page, action: #selector(retryMouse))
         addCommit("应用", key: "mouse", to: page, action: #selector(applyMouseSettings))
     }
@@ -622,12 +614,7 @@ final class SettingsPanel: NSObject, NSTextFieldDelegate, NSWindowDelegate {
             item.tag = level.rawValue
             logLevelButtons[level] = item
         }
-        label("调试级额外记录菜单与逐帧拼接诊断。", x: 18, y: 159,
-              width: 403, parent: page, color: LEStyle.secondary)
-        label("只存于本机，不含截图内容、剪贴板或键盘输入。", x: 18, y: 128,
-              width: 403, parent: page, color: LEStyle.secondary)
-        label("最多保留 3 个日志文件，每个约 1 MB。", x: 18, y: 102,
-              width: 403, parent: page, color: LEStyle.secondary)
+        HoverHintButton.guide("调试级额外记录菜单与逐帧拼接诊断。\n日志只存于本机，不含截图内容、剪贴板或键盘输入。\n最多保留 3 个日志文件，每个约 1 MB。", in: page, x: 396, y: 341)
         button("打开目录…", x: 18, y: 47, width: 110, parent: page, action: #selector(openLogDirectory))
         button("导出诊断…", x: 135, y: 47, width: 110, parent: page, action: #selector(exportLogs))
         button("清除日志…", x: 252, y: 47, width: 110, parent: page, action: #selector(clearLogs))

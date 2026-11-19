@@ -18,7 +18,7 @@ final class ShortcutSettingsView: NSView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         label("快捷键", x: 18, y: 345, width: 250, bold: true)
-        label("支持按下触发或长按触发。长按模式下，短按保留原操作。", x: 18, y: 316, width: 406)
+        HoverHintButton.guide("点击快捷键可录入新组合。\n可选择按下或长按触发；长按模式下，短按保留原操作。", in: self, x: 396, y: 341)
         for (index, action) in ShortcutPreferences.displayOrder.enumerated() {
             let y = 274 - CGFloat(index) * 75
             label(action.title, x: 18, y: y + 5, width: 110, bold: true)

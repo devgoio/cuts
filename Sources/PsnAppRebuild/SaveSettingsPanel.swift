@@ -51,6 +51,7 @@ final class SaveSettingsPanel: NSObject {
         content.addSubview(tint, positioned: .above, relativeTo: blur)
 
         label("截图保存设置", x: 22, y: 264, width: 310, size: 16, parent: content)
+        HoverHintButton.guide("在这里设定默认保存目录、命名和格式。\n每次保存时仍可选择其他位置、修改文件名。", in: content, x: 425, y: 258)
         label("保存到", x: 22, y: 222, width: 80, parent: content)
         directoryLabel.frame = CGRect(x: 22, y: 191, width: 345, height: 26)
         directoryLabel.textColor = LEStyle.secondary

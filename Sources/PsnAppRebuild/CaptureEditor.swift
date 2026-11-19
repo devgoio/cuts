@@ -1176,8 +1176,10 @@ final class CaptureEditor: NSObject, NSWindowDelegate {
                   !inline.toolbar.subviews.contains(where: { $0 is NSBox }),
                   controls.allSatisfy({
                       if ($0 as? HoverHintButton)?.isSubmenuDot == true { return $0.frame.minY == 0 && $0.frame.height == 11 }
+                      if ($0 as? HoverHintButton)?.guideText != nil { return $0.frame.midY == inline.toolbar.bounds.midY && $0.frame.width == 24 }
                       return $0.frame.minY == 7 && $0.frame.height == 32
                   }),
+                  controls.compactMap({ $0 as? HoverHintButton }).filter({ $0.guideText != nil }).count == 1,
                   controls.compactMap({ $0 as? HoverHintButton }).filter(\.isSubmenuDot).count == 7,
                   firstLevel.allSatisfy({ title in
                       controls.contains(where: { $0.toolTip?.hasPrefix(title) == true })
@@ -1367,7 +1369,7 @@ final class CaptureEditor: NSObject, NSWindowDelegate {
         canvas = EditCanvas(image: image, marks: marks)
         canvas.transparentOutsideImage = selectionShape != .rectangle
         canvas.dragsWindowOnEmptySelection = pinned
-        toolbar = NSView(frame: CGRect(x: 0, y: 0, width: 598, height: 46))
+        toolbar = NSView(frame: CGRect(x: 0, y: 0, width: 630, height: 46))
         if longDocument {
             window = NSWindow(contentRect: CGRect(x: 0, y: 0, width: 900, height: 700),
                               styleMask: [.titled, .closable, .resizable, .miniaturizable],
@@ -1665,6 +1667,10 @@ final class CaptureEditor: NSObject, NSWindowDelegate {
             ("trash", "删除选中标注", #selector(deleteSelectedMark)),
             ("xmark", "关闭", #selector(close))
         ] {
+            if action == #selector(deleteSelectedMark) {
+                HoverHintButton.guide("点已有标注即可选中；拖动可移动位置。\n拉箭头中点可改弯曲度。\n识别完成后，在图上拖选文字并按 ⌘C 复制。", in: toolbar, x: x + 2, y: 11)
+                x += 32
+            }
             let control = button(symbol: symbol, tooltip: title, action: action)
             control.frame = CGRect(x: x, y: 7, width: 28, height: 32)
             if title == "滚动长截图" { control.isEnabled = !longDocument && !pinned }
@@ -2248,7 +2254,7 @@ final class CaptureEditor: NSObject, NSWindowDelegate {
                 self.select(.select)
                 self.canvas.setOCRDocument(document)
                 self.window.makeFirstResponder(self.canvas)
-                ActionFeedback.show("可在图片原位拖选文字，按 ⌘C 复制")
+                ActionFeedback.show("文字识别完成")
             case .failure(let error):
                 CutsLog.failure("ocr", "recognize image", error)
                 ActionFeedback.show("文字识别失败：\(error.localizedDescription)")

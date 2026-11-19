@@ -30,7 +30,7 @@ Run the desktop smoke tests on a logged-in Mac with:
 open -n -W -a "$PWD/dist/Cuts.app" --args --self-test
 ```
 
-This repository contains source, not a notarized installer. Patches and reproducible bug reports are welcome. Please attach only synthetic screenshots or redacted logs to public issues.
+This repository contains source, not a notarized installer. To package a local preview, use `zsh scripts/package-dmg.sh --preview dist/Cuts.app /tmp/Cuts-preview.dmg`. A distribution image must use a Developer ID Application identity and pass Apple notarization (`--release` with `CUTS_DMG_SIGN_IDENTITY` and the name of a Keychain profile in `CUTS_NOTARY_PROFILE`). Patches and reproducible bug reports are welcome. Please attach only synthetic screenshots or redacted logs to public issues.
 
 ## Local data
 
@@ -38,7 +38,7 @@ Cuts processes captures and OCR on the Mac. Clipboard history is stored locally:
 
 ## 中文说明
 
-Cuts 是一款 macOS 菜单栏工具，把跨屏截图、滚动长截图、贴图、标注和剪贴板历史放在一起，并提供可选的鼠标增强。默认长按 ⌘V 300 ms 打开历史，短按继续普通粘贴；历史可搜索、收藏，图片可二次标注。
+Cuts 是一款 macOS 菜单栏工具，把跨屏截图、滚动长截图、贴图、标注和剪贴板历史放在一起，并提供可选的鼠标增强。默认长按 ⌘V 300 ms 打开历史，短按继续普通粘贴；历史可搜索、收藏，图片可二次标注。悬停在「?」上可查看操作指南。
 
 需要 Apple 芯片的 Mac、macOS 26+、带 macOS 27 SDK 的 Xcode 或命令行工具，以及 Homebrew 的 `webp`。运行 `zsh scripts/build-app.sh` 后，应用位于 `dist/Cuts.app`。仓库提供源码，不包含公证安装包；系统级功能需要相应的 macOS 授权。
 

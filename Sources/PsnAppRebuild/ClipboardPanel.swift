@@ -361,13 +361,7 @@ final class ClipboardPanel: NSObject, NSTableViewDataSource, NSTableViewDelegate
         scroll.documentView = table
         content.addSubview(scroll)
 
-        let hint = NSTextField(labelWithString: "双击条目，或选中后点击“粘贴”")
-        hint.font = .systemFont(ofSize: 11)
-        hint.textColor = LEStyle.secondary
-        hint.frame = CGRect(x: 21, y: 22, width: 320, height: 20)
-        hint.autoresizingMask = [.width]
-        hint.lineBreakMode = .byTruncatingTail
-        content.addSubview(hint)
+        HoverHintButton.guide("双击条目，或选中后点「粘贴」。\n悬停图片看大图；点右侧图标可标注、收藏或删除。\n拖动窗口边缘可调整大小。", in: content, x: 20, y: 19)
         let paste = PointingButton(title: "粘贴", target: self, action: #selector(pasteSelected))
         paste.appearance = NSAppearance(named: .darkAqua)
         paste.isBordered = false

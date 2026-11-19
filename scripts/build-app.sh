@@ -41,6 +41,8 @@ for notice in COPYING PATENTS; do
 done
 "$CONTENTS_DIR/MacOS/PsnAppRebuild" --render-iconset "$ICONSET_DIR"
 iconutil -c icns "$ICONSET_DIR" -o "$CONTENTS_DIR/Resources/Cuts.icns"
-codesign --force --sign "$SIGNING_IDENTITY" --timestamp=none --options runtime "$APP_DIR"
+timestamp=(--timestamp=none)
+if [[ "$SIGNING_IDENTITY" == 'Developer ID Application:'* ]]; then timestamp=(--timestamp); fi
+codesign --force --sign "$SIGNING_IDENTITY" "${timestamp[@]}" --options runtime "$APP_DIR"
 codesign --verify --strict "$APP_DIR"
 print -r -- "$APP_DIR"

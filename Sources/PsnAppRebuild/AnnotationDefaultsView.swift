@@ -200,10 +200,7 @@ final class AnnotationDefaultsView: NSView, NSTextFieldDelegate {
             firstNumberField = field
             slider("大小", scale: .fontSize, y: 76, at: \.numberSize)
             tint(draft.numberColor, y: 44, at: \.numberColor)
-            let shortcuts = NumberEditingShortcuts.label()
-            shortcuts.font = .systemFont(ofSize: 10, weight: .medium)
-            shortcuts.frame = CGRect(x: 0, y: 0, width: controlWidth, height: 43)
-            body.addSubview(shortcuts)
+            HoverHintButton.guide(NumberEditingShortcuts.guide, in: body, x: controlWidth - 24, y: 46)
         case .lens:
             slider("放大倍率", scale: .magnification, y: 157, at: \.magnification)
             let hasDiameter = draft.lensDiameter != nil
